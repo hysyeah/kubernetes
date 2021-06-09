@@ -4103,3 +4103,22 @@ func TestNoScaleDownOneMetricEmpty(t *testing.T) {
 	tc.testEMClient = testEMClient
 	tc.runTest(t)
 }
+
+func TestConditionZeroDesiredReplicasWithInvalidMetric(t *testing.T) {
+	tc := testCase{
+		minReplicas:             1,
+		maxReplicas:             4,
+		specReplicas:            1,
+		statusReplicas:          1,
+		expectedDesiredReplicas: 1,
+		CPUTarget:               100,
+		reportedLevels:          []uint64{},
+		reportedCPURequests:     []resource.Quantity{resource.MustParse("1.0"), resource.MustParse("1.0"), resource.MustParse("1.0"), resource.MustParse("1.0")},
+		useMetricsAPI:           true,
+		expectedConditions: []autoscalingv1.HorizontalPodAutoscalerCondition{
+			{Type: autoscalingv1.AbleToScale, Status: v1.ConditionTrue, Reason: "SucceededGetScale"},
+			{Type: autoscalingv1.ScalingActive, Status: v1.ConditionFalse, Reason: "FailedGetResourceMetric"},
+		},
+	}
+	tc.runTest(t)
+}
